@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Un Monde Sans Frontières</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">🌍 Un Monde Sans Frontières</div>
+            <ul class="nav-links">
+                <li><a href="#hero">Accueil</a></li>
+                <li><a href="#map">Globe</a></li>
+                <li><a href="#cultures">Cultures</a></li>
+                <li><a href="#quiz">Quiz</a></li>
+                <li><a href="#temoignages">Témoignages</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+        <div class="hero-content">
+            <h1>Un Monde Sans Frontières</h1>
+            <p>Découvrez la beauté de la diversité culturelle et connectez-vous avec le monde entier</p>
+            <a href="#map" class="cta-button">Explorez le Globe</a>
+        </div>
+    </section>
+
+    <!-- Interactive Globe Section -->
+    <section id="map">
+        <h2 class="section-title animate-on-scroll">🌍 Globe Interactif</h2>
+        <div class="world-map animate-on-scroll">
+            <h3 style="color: white; margin-bottom: 2rem;">Recherchez ou cliquez sur les pays pour découvrir leurs cultures</h3>
+            
+            <!-- Barre de recherche -->
+            <div class="search-container">
+                <input type="text" 
+                       id="country-search" 
+                       class="search-input" 
+                       placeholder="Rechercher un pays... (ex: France, Japon, Brésil)"
+                       autocomplete="off">
+                <span class="search-icon">🔍</span>
+                <div id="search-results" class="search-results"></div>
+            </div>
+
+            <!-- Container du globe -->
+            <div id="globe-container">
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white; text-align: center; flex-direction: column;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🌍</div>
+                    <p>Chargement du globe 3D...</p>
+                    <p style="margin-top: 1rem; opacity: 0.7; font-size: 0.9rem;">Veuillez patienter</p>
+                </div>
+            </div>
+
+            <!-- Informations du pays -->
+            <div id="country-info">
+                <h3 id="country-name">Cliquez sur un pays pour en savoir plus</h3>
+                <p id="country-description">Explorez les cultures du monde entier !</p>
+                <div id="country-details"></div>
+            </div>
+
+            <!-- Contrôles du globe -->
+            <div class="globe-controls">
+                <button class="cta-button" onclick="resetGlobe()">🔄 Réinitialiser</button>
+                <button class="cta-button" onclick="toggleAutoRotation()" id="auto-rotate-btn">⏸️ Pause Rotation</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Culture Gallery -->
+    <section id="cultures">
+        <h2 class="section-title animate-on-scroll">🎭 Richesses Culturelles</h2>
+        <div class="gallery">
+            <div class="culture-card animate-on-scroll">
+                <div class="culture-icon">🎨</div>
+                <h3>Art et Créativité</h3>
+                <p>L'art transcende les frontières et unit les peuples à travers l'expression créative universelle.</p>
+            </div>
+            <div class="culture-card animate-on-scroll">
+                <div class="culture-icon">🍽️</div>
+                <h3>Gastronomie Mondiale</h3>
+                <p>Les saveurs du monde racontent l'histoire des civilisations et créent des ponts entre les cultures.</p>
+            </div>
+            <div class="culture-card animate-on-scroll">
+                <div class="culture-icon">🎵</div>
+                <h3>Musiques du Monde</h3>
+                <p>La musique est un langage universel qui unit les cœurs au-delà des différences culturelles.</p>
+            </div>
+            <div class="culture-card animate-on-scroll">
+                <div class="culture-icon">📚</div>
+                <h3>Langues et Littérature</h3>
+                <p>Chaque langue porte en elle une vision unique du monde et enrichit notre compréhension globale.</p>
+            </div>
+            <div class="culture-card animate-on-scroll">
+                <div class="culture-icon">🎪</div>
+                <h3>Fêtes et Traditions</h3>
+                <p>Les célébrations traditionnelles révèlent l'âme des peuples et leurs valeurs partagées.</p>
+            </div>
+            <div class="culture-card animate-on-scroll">
+                <div class="culture-icon">🏛️</div>
+                <h3>Architecture et Patrimoine</h3>
+                <p>Les monuments et l'architecture témoignent de l'ingéniosité humaine à travers les siècles.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz Section -->
+    <section id="quiz">
+        <h2 class="section-title animate-on-scroll">🧠 Quiz Culturel</h2>
+        <div class="quiz-container animate-on-scroll">
+            <div id="quiz-content">
+                <div class="question" id="question-text">Quelle est la capitale du Japon ?</div>
+                <div class="quiz-options" id="quiz-options">
+                    <button class="quiz-option" onclick="selectAnswer(0)">Kyoto</button>
+                    <button class="quiz-option" onclick="selectAnswer(1)">Tokyo</button>
+                    <button class="quiz-option" onclick="selectAnswer(2)">Osaka</button>
+                    <button class="quiz-option" onclick="selectAnswer(3)">Hiroshima</button>
+                </div>
+                <button class="cta-button" onclick="nextQuestion()" id="next-btn" style="display: none;">Question Suivante</button>
+                <div class="quiz-score" id="quiz-score">Score: 0/0</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="temoignages">
+        <h2 class="section-title animate-on-scroll">💬 Témoignages</h2>
+        <div class="testimonial animate-on-scroll">
+            <div class="testimonial-text">
+                Voyager m'a appris que malgré nos différences, nous partageons tous les mêmes espoirs, les mêmes rêves et la même humanité. Chaque rencontre est une leçon de vie.
+            </div>
+            <div class="testimonial-author">- Marie, voyageuse passionnée</div>
+        </div>
+        <div class="testimonial animate-on-scroll">
+            <div class="testimonial-text">
+                Apprendre d'autres langues et cultures m'a ouvert l'esprit et m'a montré que la diversité est une richesse inestimable pour l'humanité.
+            </div>
+            <div class="testimonial-author">- Ahmed, étudiant international</div>
+        </div>
+        <div class="testimonial animate-on-scroll">
+            <div class="testimonial-text">
+                La cuisine internationale a été ma porte d'entrée vers d'autres cultures. Chaque plat raconte une histoire et crée des liens authentiques.
+            </div>
+            <div class="testimonial-author">- Chen Li, chef cuisinier</div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 Un Monde Sans Frontières - Célébrons la diversité culturelle 🌈</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
