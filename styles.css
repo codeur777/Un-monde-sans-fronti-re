@@ -143,7 +143,7 @@ section {
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-/* World Globe Section */
+/* World Globe and Map Section */
 .world-map {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -161,10 +161,18 @@ section {
     border-radius: 15px;
     overflow: hidden;
     cursor: grab;
+    transition: opacity 0.3s ease;
 }
 
 #globe-container:active {
     cursor: grabbing;
+}
+
+#map-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    overflow: hidden;
 }
 
 .globe-controls {
@@ -381,6 +389,10 @@ footer {
     }
 
     #globe-container {
+        height: 300px;
+    }
+
+    #map-canvas {
         height: 300px;
     }
 }

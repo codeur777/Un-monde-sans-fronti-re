@@ -5,7 +5,8 @@ let mouseDown = false;
 let mouseX = 0, mouseY = 0;
 let targetRotationX = 0, targetRotationY = 0;
 const countries = [];
-let countryData = {}; // Will be populated dynamically
+let countryData = {};
+let map = null; // Variable pour la carte Leaflet
 
 // Function to get flag emoji from CCA2 code
 function getFlagEmoji(cca2) {
@@ -39,7 +40,7 @@ async function loadCountries() {
                 name: `${flagEmoji} ${country.name.common}`,
                 description: `A vibrant nation in ${country.region}${country.subregion ? ` (${country.subregion})` : ''} known for its rich cultural heritage and diverse landscapes.`,
                 culture: langs,
-                monuments: ['National Monument', 'Historical Site', 'Cultural Landmark'], // Placeholders; can be enhanced
+                monuments: ['National Monument', 'Historical Site', 'Cultural Landmark'], // Placeholders
                 population: country.population ? country.population.toLocaleString() : 'N/A',
                 langues: langs
             };
@@ -48,7 +49,6 @@ async function loadCountries() {
         console.log(`Loaded ${Object.keys(countryData).length} countries with coordinates.`);
     } catch (error) {
         console.error('Error loading country data:', error);
-        // Fallback to original static data
         countryData = {
             'France': {
                 position: { lat: 46.2276, lon: 2.2137 },
@@ -59,7 +59,6 @@ async function loadCountries() {
                 population: '67 millions',
                 langues: 'Français'
             },
-            // ... add other static if needed
         };
     }
 }
@@ -67,6 +66,7 @@ async function loadCountries() {
 // Initialisation du globe
 function initGlobe() {
     const container = document.getElementById('globe-container');
+    const globeCanvas = document.getElementById('globe-canvas');
     
     // Configuration de la scène
     scene = new THREE.Scene();
@@ -74,33 +74,25 @@ function initGlobe() {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
+    globeCanvas.appendChild(renderer.domElement);
 
     // Création du globe
     const geometry = new THREE.SphereGeometry(2, 32, 32);
     
-    // Texture simple du globe
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     
-    // Fond océan
     ctx.fillStyle = '#4a90e2';
     ctx.fillRect(0, 0, 512, 256);
     
-    // Continents simples
     ctx.fillStyle = '#27ae60';
-    // Europe
-    ctx.fillRect(250, 80, 40, 30);
-    // Afrique
-    ctx.fillRect(260, 120, 30, 60);
-    // Asie
-    ctx.fillRect(320, 70, 80, 50);
-    // Amérique
-    ctx.fillRect(100, 100, 40, 80);
-    // Australie
-    ctx.fillRect(380, 180, 30, 20);
+    ctx.fillRect(250, 80, 40, 30); // Europe
+    ctx.fillRect(260, 120, 30, 60); // Afrique
+    ctx.fillRect(320, 70, 80, 50); // Asie
+    ctx.fillRect(100, 100, 40, 80); // Amérique
+    ctx.fillRect(380, 180, 30, 20); // Australie
     
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.MeshPhongMaterial({ 
@@ -135,6 +127,31 @@ function initGlobe() {
     animate();
 }
 
+// Initialisation de la carte Leaflet
+function initMap(lat, lon, countryName) {
+    const mapCanvas = document.getElementById('map-canvas');
+    const globeCanvas = document.getElementById('globe-canvas');
+    
+    // Cacher le globe et afficher la carte
+    globeCanvas.style.display = 'none';
+    mapCanvas.style.display = 'block';
+
+    // Supprimer la carte précédente si elle existe
+    if (map) {
+        map.remove();
+    }
+
+    // Initialiser la carte Leaflet
+    map = L.map('map-canvas').setView([lat, lon], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Ajouter un marqueur pour la capitale
+    L.marker([lat, lon]).addTo(map)
+        .bindPopup(`<b>${countryName}</b>`).openPopup();
+}
+
 // Ajout des marqueurs de pays
 function addCountryMarker(name, lat, lon) {
     const phi = (90 - lat) * (Math.PI / 180);
@@ -162,10 +179,12 @@ function setupMouseControls() {
     const mouse = new THREE.Vector2();
 
     container.addEventListener('mousedown', (event) => {
-        mouseDown = true;
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-        isAutoRotating = false;
+        if (document.getElementById('globe-canvas').style.display !== 'none') {
+            mouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+            isAutoRotating = false;
+        }
     });
 
     container.addEventListener('mouseup', () => {
@@ -173,7 +192,7 @@ function setupMouseControls() {
     });
 
     container.addEventListener('mousemove', (event) => {
-        if (mouseDown) {
+        if (mouseDown && document.getElementById('globe-canvas').style.display !== 'none') {
             const deltaX = event.clientX - mouseX;
             const deltaY = event.clientY - mouseY;
             
@@ -208,22 +227,24 @@ function setupMouseControls() {
     });
 
     container.addEventListener('click', (event) => {
-        const rect = container.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        if (document.getElementById('globe-canvas').style.display !== 'none') {
+            const rect = container.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(countries);
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(countries);
 
-        if (intersects.length > 0) {
-            const marker = intersects[0].object;
-            showCountryInfo(marker.userData.country);
+            if (intersects.length > 0) {
+                const marker = intersects[0].object;
+                showCountryInfo(marker.userData.country, false);
+            }
         }
     });
 }
 
-// Affichage des informations pays
-function showCountryInfo(countryName) {
+// Affichage des informations pays et carte
+function showCountryInfo(countryName, fromSearch = false) {
     const country = countryData[countryName];
     if (!country) return;
 
@@ -238,13 +259,24 @@ function showCountryInfo(countryName) {
 
     document.getElementById('country-info').style.display = 'block';
     document.getElementById('country-info').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    if (fromSearch) {
+        // Afficher la carte 2D
+        initMap(country.position.lat, country.position.lon, country.name);
+    } else {
+        // Tourner le globe vers le pays
+        const phi = (90 - country.position.lat) * (Math.PI / 180);
+        const theta = (country.position.lon + 180) * (Math.PI / 180);
+        targetRotationX = phi - Math.PI / 2;
+        targetRotationY = -theta;
+    }
 }
 
 // Boucle d'animation
 function animate() {
     requestAnimationFrame(animate);
 
-    if (isAutoRotating && !mouseDown) {
+    if (isAutoRotating && !mouseDown && document.getElementById('globe-canvas').style.display !== 'none') {
         globe.rotation.y += 0.005;
     } else {
         globe.rotation.x += (targetRotationX - globe.rotation.x) * 0.05;
@@ -261,12 +293,25 @@ function resetGlobe() {
     camera.position.set(0, 0, 5);
     document.getElementById('country-info').style.display = 'none';
     isAutoRotating = true;
+    
+    // Restaurer le globe
+    const globeCanvas = document.getElementById('globe-canvas');
+    const mapCanvas = document.getElementById('map-canvas');
+    globeCanvas.style.display = 'block';
+    mapCanvas.style.display = 'none';
+    
+    if (map) {
+        map.remove();
+        map = null;
+    }
 }
 
 function toggleAutoRotation() {
-    isAutoRotating = !isAutoRotating;
-    const btn = document.getElementById('auto-rotate-btn');
-    btn.textContent = isAutoRotating ? '⏸️ Pause Rotation' : '▶️ Démarrer Rotation';
+    if (document.getElementById('globe-canvas').style.display !== 'none') {
+        isAutoRotating = !isAutoRotating;
+        const btn = document.getElementById('auto-rotate-btn');
+        btn.textContent = isAutoRotating ? '⏸️ Pause Rotation' : '▶️ Démarrer Rotation';
+    }
 }
 
 // Redimensionnement
@@ -276,6 +321,9 @@ window.addEventListener('resize', () => {
         camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+    if (map) {
+        map.invalidateSize();
     }
 });
 
@@ -304,6 +352,56 @@ const quizData = [
     {
         question: "Quelle est la langue la plus parlée au monde ?",
         options: ["Anglais", "Espagnol", "Chinois Mandarin", "Hindi"],
+        correct: 2
+    },
+    {
+        question: "Quel est le plat national du Maroc ?",
+        options: ["Paella", "Couscous", "Sushi", "Tacos"],
+        correct: 1
+    },
+    {
+        question: "Dans quel pays le festival Diwali est-il principalement célébré ?",
+        options: ["Inde", "Thaïlande", "Chine", "Japon"],
+        correct: 0
+    },
+    {
+        question: "Quelle est la capitale de l'Égypte ?",
+        options: ["Alexandrie", "Le Caire", "Luxor", "Gizeh"],
+        correct: 1
+    },
+    {
+        question: "Quel instrument est emblématique de l'Écosse ?",
+        options: ["Guitare", "Cornemuse", "Sitar", "Didgeridoo"],
+        correct: 1
+    },
+    {
+        question: "Dans quel pays trouve-t-on les ruines de Machu Picchu ?",
+        options: ["Mexique", "Pérou", "Bolivie", "Colombie"],
+        correct: 1
+    },
+    {
+        question: "Quel est le plus grand désert du monde ?",
+        options: ["Sahara", "Gobi", "Antarctique", "Kalahari"],
+        correct: 2
+    },
+    {
+        question: "Quelle est la capitale de l'Australie ?",
+        options: ["Sydney", "Melbourne", "Canberra", "Perth"],
+        correct: 2
+    },
+    {
+        question: "Quel pays est connu pour son carnaval de Rio ?",
+        options: ["Argentine", "Brésil", "Mexique", "Colombie"],
+        correct: 1
+    },
+    {
+        question: "Quelle est la langue officielle du Nigeria ?",
+        options: ["Français", "Anglais", "Swahili", "Hausa"],
+        correct: 1
+    },
+    {
+        question: "Dans quel pays trouve-t-on la Grande Muraille ?",
+        options: ["Japon", "Corée", "Chine", "Vietnam"],
         correct: 2
     }
 ];
@@ -412,7 +510,6 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Scrolling fluide
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -424,7 +521,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Animations au scroll
 const observerOptions = {
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
@@ -434,10 +530,8 @@ const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             entry.target.classList.add('visible');
-            // Initialiser le globe quand la section devient visible
             if (entry.target.id === 'map' && !scene) {
                 setTimeout(async () => {
-                    // Ensure data is loaded
                     if (Object.keys(countryData).length === 0) {
                         await loadCountries();
                     }
@@ -445,8 +539,7 @@ const observer = new IntersectionObserver((entries) => {
                         initGlobe();
                     } catch (error) {
                         console.error('Erreur lors de l\'initialisation du globe:', error);
-                        // Fallback si Three.js ne fonctionne pas
-                        document.getElementById('globe-container').innerHTML = `
+                        document.getElementById('globe-canvas').innerHTML = `
                             <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white; text-align: center; flex-direction: column;">
                                 <div style="font-size: 4rem; margin-bottom: 1rem;">🌍</div>
                                 <p>Globe 3D en cours de chargement... (${Object.keys(countryData).length} pays chargés)</p>
@@ -464,10 +557,8 @@ document.querySelectorAll('.animate-on-scroll').forEach(el => {
     observer.observe(el);
 });
 
-// Initialisation du quiz
 loadQuestion();
 
-// Éléments flottants
 document.addEventListener('DOMContentLoaded', () => {
     const floatingElements = ['🌍', '🎭', '🎵', '🍽️', '🎨', '📚'];
     
@@ -493,31 +584,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 4000);
 
-    // Load countries on DOM ready
-    loadCountries();
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes float-up {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 });
-
-// CSS pour l'animation flottante
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes float-up {
-        0% {
-            transform: translateY(0) rotate(0deg);
-            opacity: 0;
-        }
-        10% {
-            opacity: 1;
-        }
-        90% {
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(-100vh) rotate(360deg);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
 
 // Fonction de recherche de pays
 function setupSearch() {
@@ -544,22 +631,12 @@ function setupSearch() {
             `).join('');
             searchResults.classList.add('active');
             
-            // Ajouter les événements de clic
             searchResults.querySelectorAll('.search-result-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const countryName = item.dataset.country;
-                    showCountryInfo(countryName);
+                    showCountryInfo(countryName, true); // Passer true pour indiquer une recherche
                     searchInput.value = '';
                     searchResults.classList.remove('active');
-                    
-                    // Faire tourner le globe vers le pays
-                    const country = countryData[countryName];
-                    if (country && globe) {
-                        const phi = (90 - country.position.lat) * (Math.PI / 180);
-                        const theta = (lon + 180) * (Math.PI / 180);
-                        targetRotationX = phi - Math.PI / 2;
-                        targetRotationY = -theta;
-                    }
                 });
             });
         } else {
@@ -568,7 +645,6 @@ function setupSearch() {
         }
     });
     
-    // Fermer les résultats en cliquant ailleurs
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.search-container')) {
             searchResults.classList.remove('active');
@@ -576,9 +652,7 @@ function setupSearch() {
     });
 }
 
-// Appelez cette fonction après le chargement des pays
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCountries();
     setupSearch();
-    // ... reste du code
 });
